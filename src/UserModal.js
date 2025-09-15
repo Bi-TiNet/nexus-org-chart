@@ -45,7 +45,7 @@ function UserModal({ isOpen, onClose, onSave, formData, setFormData, departments
               {/* Filtramos a lista para que o usuário atual não apareça como opção de gestor */}
               {users.filter(user => user.id !== formData.id).map(user => (
                 <option key={user._id} value={user._id}>
-                  {user.data.name}
+                  {user.nome} {/* <<< ESTA É A LINHA QUE MUDOU */}
                 </option>
               ))}
             </select>

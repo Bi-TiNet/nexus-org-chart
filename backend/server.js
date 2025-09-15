@@ -1,22 +1,29 @@
-// 1. Importar as bibliotecas necessárias
+// backend/server.js - VERSÃO CORRIGIDA E ORGANIZADA
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // Carrega as variáveis do arquivo .env
+require('dotenv').config();
 
-// 2. Inicializar o aplicativo Express
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 3. Configurar Middlewares
-app.use(cors()); // Permite requisições de outros domínios (nosso frontend)
-app.use(express.json()); // Permite que o servidor entenda JSON
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-// 4. Conectar ao MongoDB Atlas
+// Conexão ao MongoDB
 mongoose.connect(process.env.DATABASE_URL)
   .then(() => console.log('Conectado ao MongoDB Atlas com sucesso!'))
   .catch((err) => console.error('Erro ao conectar ao MongoDB:', err));
 
+// ===============================================
+// 1. DEFINIÇÃO DOS SCHEMAS
+// ===============================================
+
+const departmentSchema = new mongoose.Schema({
+    nome: { type: String, required: true, unique: true }
+});
 
 const userSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
@@ -28,81 +35,65 @@ const userSchema = new mongoose.Schema({
     gestor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
-// 6. Criar o Model a partir do Schema
+// ===============================================
+// 2. CRIAÇÃO DOS MODELS
+// ===============================================
+
+const Department = mongoose.model('Department', departmentSchema);
 const User = mongoose.model('User', userSchema);
 
-// =================================================================
-//  INÍCIO DO BLOCO DE DEPARTAMENTOS - COLE ESTE CÓDIGO
-// =================================================================
+// ===============================================
+// 3. ROTAS DA API (ENDPOINTS)
+// ===============================================
 
-// 5.1 Definir o Schema dos Departamentos
-const departmentSchema = new mongoose.Schema({
-    nome: { type: String, required: true, unique: true }
-});
+// --- Rotas de Departamentos ---
 
-// 6.1 Criar o Model a partir do Schema
-const Department = mongoose.model('Department', departmentSchema);
-
-// 7.1 Criar as Rotas da API para os Departamentos
-
-// ROTA PARA BUSCAR TODOS OS DEPARTAMENTOS
 app.get('/api/departments', async (req, res) => {
     try {
-        const departments = await Department.find().sort({ nome: 1 }); // Ordena por nome
+        const departments = await Department.find().sort({ nome: 1 });
         res.json(departments);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar departamentos', error });
     }
 });
 
-// ROTA PARA ADICIONAR UM NOVO DEPARTAMENTO
 app.post('/api/departments', async (req, res) => {
     const { nome } = req.body;
-    if (!nome) {
-        return res.status(400).json({ message: 'O nome do departamento é obrigatório.' });
-    }
-    const newDepartment = new Department({ nome });
+    if (!nome) return res.status(400).json({ message: 'O nome do departamento é obrigatório.' });
+    
     try {
+        const newDepartment = new Department({ nome });
         const savedDepartment = await newDepartment.save();
         res.status(201).json(savedDepartment);
     } catch (error) {
-        res.status(400).json({ message: 'Erro ao criar departamento. Ele já pode existir.', error });
+        res.status(400).json({ message: 'Erro ao criar departamento.', error });
     }
 });
 
-// ROTA PARA EDITAR (RENOMEAR) UM DEPARTAMENTO
 app.put('/api/departments/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { nome } = req.body;
-        const updatedDepartment = await Department.findByIdAndUpdate(id, { nome }, { new: true });
-        if (!updatedDepartment) {
-            return res.status(404).json({ message: 'Departamento não encontrado.' });
-        }
+        const updatedDepartment = await Department.findByIdAndUpdate(req.params.id, { nome: req.body.nome }, { new: true });
+        if (!updatedDepartment) return res.status(404).json({ message: 'Departamento não encontrado.' });
         res.json(updatedDepartment);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao atualizar departamento.', error });
     }
 });
 
-// ROTA PARA APAGAR UM DEPARTAMENTO
 app.delete('/api/departments/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const deletedDepartment = await Department.findByIdAndDelete(id);
-        if (!deletedDepartment) {
-            return res.status(404).json({ message: 'Departamento não encontrado.' });
-        }
+        const deletedDepartment = await Department.findByIdAndDelete(req.params.id);
+        if (!deletedDepartment) return res.status(404).json({ message: 'Departamento não encontrado.' });
         res.json({ message: 'Departamento apagado com sucesso.' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao apagar departamento.', error });
     }
 });
 
-// ROTA PARA BUSCAR TODOS OS USUÁRIOS
+// --- Rotas de Utilizadores ---
+
 app.get('/api/users', async (req, res) => {
     try {
-        // Adicionamos um segundo .populate() para trazer os dados do gestor junto
         const users = await User.find().populate('departamento').populate('gestor');
         res.json(users);
     } catch (error) {
@@ -110,12 +101,9 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// ROTA PARA ADICIONAR UM NOVO USUÁRIO
 app.post('/api/users', async (req, res) => {
-    const { id, nome, cargo, position } = req.body;
-    const newUser = new User({ id, nome, cargo, position });
-
     try {
+        const newUser = new User(req.body);
         const savedUser = await newUser.save();
         res.status(201).json(savedUser);
     } catch (error) {
@@ -123,44 +111,30 @@ app.post('/api/users', async (req, res) => {
     }
 });
 
-// ROTA PARA EDITAR (ATUALIZAR) UM USUÁRIO EXISTENTE (PUT)
 app.put('/api/users/:id', async (req, res) => {
     try {
-        const userId = req.params.id;
-        const updatedData = req.body;
-        
-        // Encontra o usuário pelo 'id' customizado e atualiza com os novos dados
-        const updatedUser = await User.findOneAndUpdate({ id: userId }, updatedData, { new: true });
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-
+        const updatedUser = await User.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        if (!updatedUser) return res.status(404).json({ message: 'Usuário não encontrado' });
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao atualizar usuário', error });
     }
 });
 
-// ROTA PARA APAGAR UM USUÁRIO (DELETE)
 app.delete('/api/users/:id', async (req, res) => {
     try {
-        const userId = req.params.id;
-        
-        // Encontra o usuário pelo 'id' customizado e o remove
-        const deletedUser = await User.findOneAndDelete({ id: userId });
-
-        if (!deletedUser) {
-            return res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-
+        const deletedUser = await User.findOneAndDelete({ id: req.params.id });
+        if (!deletedUser) return res.status(404).json({ message: 'Usuário não encontrado' });
         res.json({ message: 'Usuário apagado com sucesso' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao apagar usuário', error });
     }
 });
 
-// 8. Iniciar o servidor
+// ===============================================
+// 4. INICIAR O SERVIDOR
+// ===============================================
+
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
