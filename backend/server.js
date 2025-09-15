@@ -81,14 +81,20 @@ app.put('/api/departments/:id', async (req, res) => {
 });
 
 app.delete('/api/departments/:id', async (req, res) => {
+    const departmentId = req.params.id;
     try {
-        const deletedDepartment = await Department.findByIdAndDelete(req.params.id);
+        // Antes de apagar o departamento, remove a referência em todos os utilizadores
+        await User.updateMany({ departamento: departmentId }, { $set: { departamento: null } });
+
+        const deletedDepartment = await Department.findByIdAndDelete(departmentId);
         if (!deletedDepartment) return res.status(404).json({ message: 'Departamento não encontrado.' });
-        res.json({ message: 'Departamento apagado com sucesso.' });
+        
+        res.json({ message: 'Departamento apagado com sucesso e referências atualizadas.' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao apagar departamento.', error });
     }
 });
+
 
 // --- Rotas de Utilizadores ---
 
@@ -122,10 +128,20 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 app.delete('/api/users/:id', async (req, res) => {
+    const userIdToDelete = req.params.id;
     try {
-        const deletedUser = await User.findOneAndDelete({ id: req.params.id });
-        if (!deletedUser) return res.status(404).json({ message: 'Usuário não encontrado' });
-        res.json({ message: 'Usuário apagado com sucesso' });
+        // Encontra o _id do utilizador a ser apagado
+        const userToDelete = await User.findOne({ id: userIdToDelete });
+        if (!userToDelete) return res.status(404).json({ message: 'Usuário não encontrado' });
+
+        // Remove a referência a este utilizador como gestor noutros utilizadores
+        await User.updateMany({ gestor: userToDelete._id }, { $set: { gestor: null } });
+
+        // Apaga o utilizador
+        const deletedUser = await User.findOneAndDelete({ id: userIdToDelete });
+        if (!deletedUser) return res.status(404).json({ message: 'Usuário não encontrado' }); // Verificação dupla por segurança
+        
+        res.json({ message: 'Usuário apagado com sucesso e referências de gestor atualizadas.' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao apagar usuário', error });
     }

@@ -70,6 +70,7 @@ function App() {
 
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
+      alert("Não foi possível carregar os dados da API. Verifique se o backend está a correr.");
     }
   }, []); // Dependência vazia, vai ser chamado pelo useEffect
 
@@ -107,13 +108,15 @@ function App() {
       if (isEditing) {
         await axios.put(`http://localhost:5000/api/users/${formData.id}`, payload);
       } else {
-        const newUserPayload = { ...payload, id: formData.nome.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(), position: { x: 150, y: 150 }, fotoUrl: `https://i.pravatar.cc/150?u=${formData.nome}` };
+        const uniqueId = formData.nome.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const newUserPayload = { ...payload, id: uniqueId, position: { x: 150, y: 150 }, fotoUrl: `https://i.pravatar.cc/150?u=${formData.nome}` };
         await axios.post('http://localhost:5000/api/users', newUserPayload);
       }
       fetchAllData(); // Re-busca todos os dados para atualizar o ecrã
       handleCloseUserModal();
     } catch (error) {
       console.error("Erro ao salvar utilizador:", error);
+      alert(`Erro ao salvar utilizador: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -124,14 +127,15 @@ function App() {
         fetchAllData();
       } catch (e) {
         console.error("Erro ao apagar utilizador:", e);
+        alert("Erro ao apagar utilizador.");
       }
     }
   };
 
   // Funções de Departamento
-  const handleAddDepartment = async (name) => { try { await axios.post('http://localhost:5000/api/departments', { nome: name }); fetchAllData(); } catch (e) { console.error(e); alert("Erro."); }};
-  const handleUpdateDepartment = async (id, newName) => { try { await axios.put(`http://localhost:5000/api/departments/${id}`, { nome: newName }); fetchAllData(); } catch (e) { console.error(e); }};
-  const handleDeleteDepartment = async (id) => { if (window.confirm("Tem a certeza?")) { try { await axios.delete(`http://localhost:5000/api/departments/${id}`); fetchAllData(); } catch (e) { console.error(e); } }};
+  const handleAddDepartment = async (name) => { try { await axios.post('http://localhost:5000/api/departments', { nome: name }); fetchAllData(); } catch (e) { console.error(e); alert("Erro ao adicionar departamento."); }};
+  const handleUpdateDepartment = async (id, newName) => { try { await axios.put(`http://localhost:5000/api/departments/${id}`, { nome: newName }); fetchAllData(); } catch (e) { console.error(e); alert("Erro ao atualizar departamento."); }};
+  const handleDeleteDepartment = async (id) => { if (window.confirm("Tem a certeza? Apagar um departamento irá desassociá-lo de todos os funcionários.")) { try { await axios.delete(`http://localhost:5000/api/departments/${id}`); fetchAllData(); } catch (e) { console.error(e); alert("Erro ao apagar departamento."); } }};
 
   return (
     <div style={{ height: '100vh', width: '100%', backgroundColor: '#121212' }}>
