@@ -1,61 +1,77 @@
-// src/UserModal.js
-
+// src/UserModal.js - FASE 1: PERFIS 360º
 import React from 'react';
+import './UserModal.css';
 
-// Adicionamos 'users' às props que o componente recebe
 function UserModal({ isOpen, onClose, onSave, formData, setFormData, departments, users }) {
   if (!isOpen) return null;
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({ ...prevData, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Lógica para lidar com campos de texto que serão convertidos em arrays (skills, projetos)
+  const handleArrayChange = (e) => {
+    const { name, value } = e.target;
+    // Converte a string separada por vírgulas num array de strings, removendo espaços extra
+    setFormData(prev => ({ ...prev, [name]: value.split(',').map(item => item.trim()) }));
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>{formData.id ? "Editar Funcionário" : "Adicionar Novo Funcionário"}</h2>
-        <form onSubmit={(e) => { e.preventDefault(); onSave(); }}>
-          {/* Campos Nome e Cargo */}
-          <div className="form-group">
-            <label>Nome:</label>
-            <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label>Cargo:</label>
-            <input type="text" name="cargo" value={formData.cargo} onChange={handleInputChange} required />
-          </div>
+        <h2>{formData._id ? 'Editar Funcionário' : 'Adicionar Funcionário'}</h2>
+        
+        <label>Nome:</label>
+        <input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} placeholder="Nome completo"/>
 
-          {/* Campo de Seleção de Departamento */}
-          <div className="form-group">
-            <label>Departamento:</label>
-            <select name="departamento" value={formData.departamento || ''} onChange={handleInputChange}>
-              <option value="">-- Sem Departamento --</option>
-              {departments.map(dept => (
-                <option key={dept._id} value={dept._id}>{dept.nome}</option>
-              ))}
-            </select>
-          </div>
+        <label>Cargo:</label>
+        <input type="text" name="cargo" value={formData.cargo || ''} onChange={handleChange} placeholder="Cargo do funcionário"/>
+        
+        <label>Email:</label>
+        <input type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="email@empresa.com"/>
 
-          {/* NOSSO NOVO CAMPO DE SELEÇÃO DE GESTOR */}
-          <div className="form-group">
-            <label>Se reporta a:</label>
-            <select name="gestor" value={formData.gestor || ''} onChange={handleInputChange}>
-              <option value="">-- Ninguém (CEO, etc.) --</option>
-              {/* Filtramos a lista para que o usuário atual não apareça como opção de gestor */}
-              {users.filter(user => user.id !== formData.id).map(user => (
-                <option key={user._id} value={user._id}>
-                  {user.nome} {/* <<< ESTA É A LINHA QUE MUDOU */}
-                </option>
-              ))}
-            </select>
-          </div>
+        <label>Departamento:</label>
+        <select name="departamento" value={formData.departamento || ''} onChange={handleChange}>
+          <option value="">Nenhum</option>
+          {departments.map(d => <option key={d._id} value={d._id}>{d.nome}</option>)}
+        </select>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">Cancelar</button>
-            <button type="submit" className="btn-save">Salvar</button>
-          </div>
-        </form>
+        <label>Gestor:</label>
+        <select name="gestor" value={formData.gestor || ''} onChange={handleChange}>
+          <option value="">Nenhum</option>
+          {users.filter(u => u._id !== formData._id).map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
+        </select>
+
+        <label>Status:</label>
+        <select name="status" value={formData.status || 'Disponível'} onChange={handleChange}>
+            <option value="Disponível">Disponível</option>
+            <option value="Ocupado">Ocupado</option>
+            <option value="De Férias">De Férias</option>
+        </select>
+
+        <label>Competências (separadas por vírgula):</label>
+        <input 
+          type="text" 
+          name="skills" 
+          value={(formData.skills || []).join(', ')} 
+          onChange={handleArrayChange} 
+          placeholder="React, Node.js, Redes..."
+        />
+
+        <label>Projetos Atuais (separados por vírgula):</label>
+        <input 
+          type="text" 
+          name="projetos" 
+          value={(formData.projetos || []).join(', ')} 
+          onChange={handleArrayChange} 
+          placeholder="Nexus, Projeto X..."
+        />
+
+        <div className="modal-actions">
+          <button onClick={onClose} className="btn-cancel">Cancelar</button>
+          <button onClick={onSave} className="btn-save">Guardar</button>
+        </div>
       </div>
     </div>
   );

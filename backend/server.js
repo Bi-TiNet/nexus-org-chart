@@ -1,4 +1,4 @@
-// backend/server.js - VERSÃO CORRIGIDA E ORGANIZADA
+// backend/server.js - FASE 1: PERFIS 360º
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -22,18 +22,28 @@ mongoose.connect(process.env.DATABASE_URL)
 // ===============================================
 
 const departmentSchema = new mongoose.Schema({
-    nome: { type: String, required: true, unique: true }
+    nome: { type: String, required: true, unique: true },
+    gestor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
 const userSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     nome: { type: String, required: true },
     cargo: { type: String, required: true },
+    email: { type: String, required: false }, // NOVO
     fotoUrl: String,
     position: { x: Number, y: Number },
     departamento: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
-    gestor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    gestor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    skills: [{ type: String }], // NOVO: Array de competências
+    projetos: [{ type: String }], // NOVO: Array de projetos
+    status: { // NOVO: Status do funcionário
+      type: String,
+      enum: ['Disponível', 'Ocupado', 'De Férias'],
+      default: 'Disponível'
+    }
 });
+
 
 // ===============================================
 // 2. CRIAÇÃO DOS MODELS
@@ -50,7 +60,8 @@ const User = mongoose.model('User', userSchema);
 
 app.get('/api/departments', async (req, res) => {
     try {
-        const departments = await Department.find().sort({ nome: 1 });
+        // ATUALIZADO: Adiciona o .populate() para trazer os dados do gestor
+        const departments = await Department.find().populate('gestor').sort({ nome: 1 });
         res.json(departments);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar departamentos', error });
@@ -58,11 +69,12 @@ app.get('/api/departments', async (req, res) => {
 });
 
 app.post('/api/departments', async (req, res) => {
-    const { nome } = req.body;
+    // ATUALIZADO: Agora aceita 'nome' e 'gestor'
+    const { nome, gestor } = req.body;
     if (!nome) return res.status(400).json({ message: 'O nome do departamento é obrigatório.' });
     
     try {
-        const newDepartment = new Department({ nome });
+        const newDepartment = new Department({ nome, gestor: gestor || null });
         const savedDepartment = await newDepartment.save();
         res.status(201).json(savedDepartment);
     } catch (error) {
@@ -72,7 +84,13 @@ app.post('/api/departments', async (req, res) => {
 
 app.put('/api/departments/:id', async (req, res) => {
     try {
-        const updatedDepartment = await Department.findByIdAndUpdate(req.params.id, { nome: req.body.nome }, { new: true });
+        // ATUALIZADO: Agora aceita 'nome' e 'gestor' para atualização
+        const { nome, gestor } = req.body;
+        const updatedDepartment = await Department.findByIdAndUpdate(
+            req.params.id, 
+            { nome, gestor: gestor || null }, 
+            { new: true }
+        );
         if (!updatedDepartment) return res.status(404).json({ message: 'Departamento não encontrado.' });
         res.json(updatedDepartment);
     } catch (error) {
@@ -83,7 +101,6 @@ app.put('/api/departments/:id', async (req, res) => {
 app.delete('/api/departments/:id', async (req, res) => {
     const departmentId = req.params.id;
     try {
-        // Antes de apagar o departamento, remove a referência em todos os utilizadores
         await User.updateMany({ departamento: departmentId }, { $set: { departamento: null } });
 
         const deletedDepartment = await Department.findByIdAndDelete(departmentId);
@@ -130,16 +147,13 @@ app.put('/api/users/:id', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
     const userIdToDelete = req.params.id;
     try {
-        // Encontra o _id do utilizador a ser apagado
         const userToDelete = await User.findOne({ id: userIdToDelete });
         if (!userToDelete) return res.status(404).json({ message: 'Usuário não encontrado' });
 
-        // Remove a referência a este utilizador como gestor noutros utilizadores
         await User.updateMany({ gestor: userToDelete._id }, { $set: { gestor: null } });
 
-        // Apaga o utilizador
         const deletedUser = await User.findOneAndDelete({ id: userIdToDelete });
-        if (!deletedUser) return res.status(404).json({ message: 'Usuário não encontrado' }); // Verificação dupla por segurança
+        if (!deletedUser) return res.status(404).json({ message: 'Usuário não encontrado' });
         
         res.json({ message: 'Usuário apagado com sucesso e referências de gestor atualizadas.' });
     } catch (error) {
