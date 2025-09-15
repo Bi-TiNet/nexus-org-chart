@@ -1,0 +1,59 @@
+/* src/DepartmentModal.css */
+.department-add-form {
+  display: flex;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.department-add-form input {
+  flex-grow: 1;
+  padding: 8px;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.department-add-form button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  background-color: #00aaff;
+  color: #1e1e1e;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.department-list {
+  list-style-type: none;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.department-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.department-list span {
+  font-weight: bold;
+}
+
+.department-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.department-actions button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+}
