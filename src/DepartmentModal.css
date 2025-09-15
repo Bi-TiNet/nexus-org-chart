@@ -1,116 +1,121 @@
-// src/DepartmentModal.js - CÓDIGO CORRIGIDO E MELHORADO
-import React, { useState, useEffect } from 'react';
-import './DepartmentModal.css';
+/* src/DepartmentModal.css */
 
-function DepartmentModal({ isOpen, onClose, departments, onAdd, onUpdate, onDelete, users }) {
-  const [newDepartmentName, setNewDepartmentName] = useState('');
-  
-  // Estado para controlar qual departamento está a ser editado
-  const [editingDeptId, setEditingDeptId] = useState(null);
-  
-  // Estado para guardar os dados do formulário de edição
-  const [editFormData, setEditFormData] = useState({ name: '', managerId: '' });
-
-  useEffect(() => {
-    // Se o modal for fechado, limpa o estado de edição
-    if (!isOpen) {
-      setEditingDeptId(null);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleAddClick = () => {
-    if (newDepartmentName.trim()) {
-      onAdd({ nome: newDepartmentName.trim() });
-      setNewDepartmentName('');
-    }
-  };
-
-  const handleStartEdit = (dept) => {
-    setEditingDeptId(dept._id);
-    setEditFormData({
-      name: dept.nome,
-      managerId: dept.gestor?._id || ''
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingDeptId(null);
-  };
-
-  const handleUpdateClick = () => {
-    if (editingDeptId && editFormData.name.trim()) {
-      onUpdate(editingDeptId, {
-        nome: editFormData.name,
-        gestor: editFormData.managerId || null
-      });
-      setEditingDeptId(null);
-    }
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="department-modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>Gerir Departamentos</h2>
-        <div className="add-department-form">
-          <input
-            type="text"
-            value={newDepartmentName}
-            onChange={(e) => setNewDepartmentName(e.target.value)}
-            placeholder="Nome do novo departamento"
-          />
-          <button onClick={handleAddClick}>Adicionar</button>
-        </div>
-        
-        <ul className="department-list">
-          {departments.map((dept) => (
-            <li key={dept._id} className="department-item">
-              {editingDeptId === dept._id ? (
-                // Formulário de Edição
-                <>
-                  <input 
-                    type="text" 
-                    value={editFormData.name}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="edit-input"
-                  />
-                  <select
-                    value={editFormData.managerId}
-                    onChange={(e) => setEditFormData({ ...editFormData, managerId: e.target.value })}
-                    className="edit-select"
-                  >
-                    <option value="">Sem Gestor</option>
-                    {users.map(user => (
-                      <option key={user._id} value={user._id}>{user.nome}</option>
-                    ))}
-                  </select>
-                  <div className="department-actions">
-                    <button onClick={handleUpdateClick} title="Guardar">💾</button>
-                    <button onClick={handleCancelEdit} title="Cancelar">❌</button>
-                  </div>
-                </>
-              ) : (
-                // Visualização Normal
-                <>
-                  <span className="dept-name">{dept.nome}</span>
-                  <span className="dept-manager">{dept.gestor ? `Gestor: ${dept.gestor.nome}` : 'Sem gestor'}</span>
-                  <div className="department-actions">
-                    <button onClick={() => handleStartEdit(dept)} title="Editar">✏️</button>
-                    <button onClick={() => onDelete(dept._id)} title="Apagar" className="btn-delete">🗑️</button>
-                  </div>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-
-        <div className="department-modal-actions">
-          <button onClick={onClose}>Fechar</button>
-        </div>
-      </div>
-    </div>
-  );
+.department-modal-content {
+  background-color: #1e1e1e;
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 25px rgba(0, 200, 255, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  color: #e0e0e0;
 }
 
-export default DepartmentModal;
+.department-modal-content h2 {
+  margin: 0 0 20px 0;
+  color: #00aaff;
+  text-align: center;
+  font-weight: 500;
+}
+
+.add-department-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.add-department-form input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.add-department-form input:focus {
+  outline: none;
+  border-color: #00aaff;
+  box-shadow: 0 0 8px rgba(0, 170, 255, 0.5);
+}
+
+.add-department-form button {
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: #00aaff;
+  color: #121212;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.add-department-form button:hover {
+  background-color: #33ccff;
+  box-shadow: 0 0 10px rgba(0, 170, 255, 0.7);
+}
+
+.department-list {
+  list-style: none;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.department-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+
+.department-item:last-child {
+  border-bottom: none;
+}
+
+.department-item span {
+  flex-grow: 1;
+}
+
+.department-actions button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-left: 10px;
+  transition: color 0.2s ease;
+}
+
+.department-actions button:hover {
+  color: #00aaff;
+}
+
+.department-actions .btn-delete:hover {
+    color: #ff4d4d;
+}
+
+.department-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.department-modal-actions button {
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: transparent;
+  color: #a0a0a0;
+  transition: all 0.2s ease;
+}
+
+.department-modal-actions button:hover {
+  background-color: #333;
+  color: #fff;
+}

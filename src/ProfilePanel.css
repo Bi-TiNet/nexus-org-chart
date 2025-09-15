@@ -1,0 +1,139 @@
+/* src/ProfilePanel.css */
+
+.profile-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 350px;
+  height: 100%;
+  background-color: #1e1e1e;
+  border-left: 1px solid rgba(0, 200, 255, 0.3);
+  box-shadow: -5px 0px 20px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  padding: 25px;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.profile-panel.open {
+  transform: translateX(0);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.panel-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #00aaff;
+  margin-right: 20px;
+}
+
+.panel-header-info h2 {
+  margin: 0;
+  color: #00aaff;
+  font-size: 1.5rem;
+}
+
+.panel-header-info span {
+  font-size: 1rem;
+  color: #a0a0a0;
+}
+
+.close-button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.panel-body {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-section h3 {
+  color: #00aaff;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.info-item strong {
+  color: #a0a0a0;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.status {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status.disponivel {
+  background-color: #28a745;
+  color: white;
+}
+
+.status.ocupado {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status.ferias {
+  background-color: #ffc107;
+  color: black;
+}
+
+.skills-list, .projects-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.skills-list li, .projects-list li {
+  background-color: #333;
+  color: #00aaff;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  border: 1px solid #444;
+}

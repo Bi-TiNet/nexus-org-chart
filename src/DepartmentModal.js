@@ -1,37 +1,52 @@
-// src/DepartmentModal.js - COMPLETAMENTE ATUALIZADO
-import React, { useState } from 'react';
+// src/DepartmentModal.js - CÓDIGO CORRIGIDO E MELHORADO
+import React, { useState, useEffect } from 'react';
 import './DepartmentModal.css';
 
-// O modal agora precisa da lista de utilizadores para o dropdown
 function DepartmentModal({ isOpen, onClose, departments, onAdd, onUpdate, onDelete, users }) {
   const [newDepartmentName, setNewDepartmentName] = useState('');
-  const [editingDepartment, setEditingDepartment] = useState(null);
+  
+  // Estado para controlar qual departamento está a ser editado
+  const [editingDeptId, setEditingDeptId] = useState(null);
+  
+  // Estado para guardar os dados do formulário de edição
+  const [editFormData, setEditFormData] = useState({ name: '', managerId: '' });
+
+  useEffect(() => {
+    // Se o modal for fechado, limpa o estado de edição
+    if (!isOpen) {
+      setEditingDeptId(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleAddClick = () => {
-    if (newDepartmentName) {
-      onAdd({ nome: newDepartmentName });
+    if (newDepartmentName.trim()) {
+      onAdd({ nome: newDepartmentName.trim() });
       setNewDepartmentName('');
     }
   };
 
-  const handleUpdateClick = () => {
-    if (editingDepartment) {
-      onUpdate(editingDepartment._id, { 
-        nome: editingDepartment.nome, 
-        gestor: editingDepartment.gestor?._id || editingDepartment.gestor 
-      });
-      setEditingDepartment(null);
-    }
+  const handleStartEdit = (dept) => {
+    setEditingDeptId(dept._id);
+    setEditFormData({
+      name: dept.nome,
+      managerId: dept.gestor?._id || ''
+    });
   };
 
-  const startEditing = (dept) => {
-    setEditingDepartment({ ...dept });
+  const handleCancelEdit = () => {
+    setEditingDeptId(null);
   };
-  
-  const cancelEditing = () => {
-    setEditingDepartment(null);
+
+  const handleUpdateClick = () => {
+    if (editingDeptId && editFormData.name.trim()) {
+      onUpdate(editingDeptId, {
+        nome: editFormData.name,
+        gestor: editFormData.managerId || null
+      });
+      setEditingDeptId(null);
+    }
   };
 
   return (
@@ -51,17 +66,18 @@ function DepartmentModal({ isOpen, onClose, departments, onAdd, onUpdate, onDele
         <ul className="department-list">
           {departments.map((dept) => (
             <li key={dept._id} className="department-item">
-              {editingDepartment?._id === dept._id ? (
+              {editingDeptId === dept._id ? (
+                // Formulário de Edição
                 <>
                   <input 
                     type="text" 
-                    value={editingDepartment.nome}
-                    onChange={(e) => setEditingDepartment({...editingDepartment, nome: e.target.value})}
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                     className="edit-input"
                   />
                   <select
-                    value={editingDepartment.gestor?._id || editingDepartment.gestor || ''}
-                    onChange={(e) => setEditingDepartment({...editingDepartment, gestor: e.target.value})}
+                    value={editFormData.managerId}
+                    onChange={(e) => setEditFormData({ ...editFormData, managerId: e.target.value })}
                     className="edit-select"
                   >
                     <option value="">Sem Gestor</option>
@@ -71,15 +87,16 @@ function DepartmentModal({ isOpen, onClose, departments, onAdd, onUpdate, onDele
                   </select>
                   <div className="department-actions">
                     <button onClick={handleUpdateClick} title="Guardar">💾</button>
-                    <button onClick={cancelEditing} title="Cancelar">❌</button>
+                    <button onClick={handleCancelEdit} title="Cancelar">❌</button>
                   </div>
                 </>
               ) : (
+                // Visualização Normal
                 <>
                   <span className="dept-name">{dept.nome}</span>
                   <span className="dept-manager">{dept.gestor ? `Gestor: ${dept.gestor.nome}` : 'Sem gestor'}</span>
                   <div className="department-actions">
-                    <button onClick={() => startEditing(dept)} title="Editar">✏️</button>
+                    <button onClick={() => handleStartEdit(dept)} title="Editar">✏️</button>
                     <button onClick={() => onDelete(dept._id)} title="Apagar" className="btn-delete">🗑️</button>
                   </div>
                 </>
